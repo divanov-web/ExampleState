@@ -19,7 +19,7 @@ use CFormField;
 use CFormResult;
 use general\tools\Controller\ActionFilter\CacheIBlock;
 
-class FormController extends Controller
+class FormPage extends Controller
 {
     function configureActions(): array
     {
