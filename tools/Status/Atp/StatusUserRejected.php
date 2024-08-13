@@ -1,13 +1,13 @@
 <?php
 
-namespace aton\tools\Atp\Status;
+namespace aton\tools\Atp\Status\Atp;
 
+use aton\tools\Atp\Button;
+use aton\tools\Atp\Status\AbstractStatus;
 
-use \aton\tools\Atp\Button;
-
-class StatusItUserRejected extends AbstractStatus
+class StatusUserRejected extends AbstractStatus
 {
-    static public $statusCode = 'IT_USER_REJECTED';
+    static public $statusCode = 'ATP_USER_REJECTED';
     protected $rejectedStatus = true;
 
     public function getNextStatus(): ?AbstractStatus {

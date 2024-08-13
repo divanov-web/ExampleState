@@ -8,7 +8,7 @@ use aton\tools\Soap\Mail\MailService;
 
 class StatusTaskRejected extends AbstractStatus
 {
-    static public $statusCode = 'TASK_REJECTED';
+    static public $statusCode = 'IT_TASK_REJECTED';
     static public $eventCode = 'ITTP_REJECT';
     protected $rejectedStatus = true;
 

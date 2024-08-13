@@ -1,7 +1,7 @@
 <?php
 /**
- * State Pattern
- * Status Classes - State of instance AtpApplication
+ * Паттерн "Состояние"
+ * Классы Status - состояния объекта AtpApplication
  */
 
 namespace aton\tools\Atp\Status;
@@ -10,6 +10,8 @@ namespace aton\tools\Atp\Status;
 use aton\tools\Atp\AtpApplication;
 use aton\tools\Atp\Button;
 use aton\tools\Soap\Mail\MailService;
+use aton\tools\Tables\Atp\AtpStatusTable;
+use aton\Main\Type\DateTime as DateTime;
 
 abstract class AbstractStatus
 {
@@ -17,6 +19,12 @@ abstract class AbstractStatus
      * @var AtpApplication
      */
     protected $application;
+
+    /**
+     * Массив данных статуса
+     * @var array
+     */
+    protected $statusData = [];
 
     /**
      * Код статуса в БД
@@ -49,6 +57,12 @@ abstract class AbstractStatus
     protected $rejectedStatus = false;
 
     /**
+     * Текст на кнопке для админки
+     * @var string
+     */
+    protected string $buttonValue = '';
+
+    /**
      * @return bool
      */
     public function isRejectedStatus(): bool
@@ -76,7 +90,46 @@ abstract class AbstractStatus
         $this->application = $application;
     }
 
-    abstract public function getNextStatus(): ?AbstractStatus;
+    /**
+     * Название для кнопки принятия
+     * @return string
+     */
+    public function getButtonValue()
+    {
+        return $this->buttonValue;
+    }
+
+    /**
+     * Получить из базы информацию по статусу
+     * @throws \aton\Main\ArgumentException
+     * @throws \aton\Main\ObjectPropertyException
+     * @throws \aton\Main\SystemException
+     */
+    public function __construct()
+    {
+        $status = AtpStatusTable::getList([
+            'select' => [
+                '*',
+                'NEXT_STATUS_CODE' => 'NEXT_STATUS.CODE',
+            ],
+            'filter' => ['CODE' => static::$statusCode],
+            'cache' => array(
+                'ttl' => 60
+            )
+        ])->fetch();
+        if($status) {
+            $this->statusData = $status;
+            $this->buttonValue = $status['BUTTON_VALUE'] ?: '-Название-';
+        }
+    }
+
+    public function getNextStatus(): ?AbstractStatus {
+        $nextStatus = null;
+        if($this->statusData['NEXT_STATUS_CODE']) {
+            $nextStatus = AtpApplication::getStatusByCode($this->statusData['NEXT_STATUS_CODE']);
+        }
+        return $nextStatus;
+    }
 
     abstract public function getRejectStatus(): ?AbstractStatus;
 
@@ -115,7 +168,11 @@ abstract class AbstractStatus
      */
     public function getButton(): ?Button
     {
-        return new Button();
+        $buton = null;
+        if($this->getButtonValue()) {
+            $buton = new Button($this->getButtonValue(), $this->getStatusCode());
+        }
+        return $buton;
     }
 
     /**
@@ -126,6 +183,15 @@ abstract class AbstractStatus
     public function getButtonAfterReject(): ?Button
     {
         return $this->getButton();
+    }
+
+    /**
+     * Массив с данынми по кнопке для пользователя в кабинете стажёра
+     * @return array|null
+     */
+    public function getUserButton(): ?array
+    {
+        return null;
     }
 
     /**
@@ -149,10 +215,10 @@ abstract class AbstractStatus
      * @throws \aton\tools\Soap\Mail\MailException\EventNotFoundMailException
      * @throws \aton\tools\Soap\Mail\MailException\FieldCheckMailException
      */
-    public function sendNormalEmail() {
+    public function sendNormalEmail(): void {
         if(strlen(static::$eventCode)) {
             $mailService = new MailService([
-                'NAME' => $this->application->getOnlyName(),
+                'NAME' => $this->application->getName(),
                 'EMAIL' => $this->application->getEmail(),
                 'YEAR' => $this->application->getYear()
             ],
@@ -174,7 +240,7 @@ abstract class AbstractStatus
     {
         if (strlen(static::$eventAfterRejectCode)) {
             $mailService = new MailService([
-                    'NAME' => $this->application->getOnlyName(),
+                    'NAME' => $this->application->getName(),
                     'EMAIL' => $this->application->getEmail(),
                     'YEAR' => $this->application->getYear()
                 ],
@@ -184,4 +250,25 @@ abstract class AbstractStatus
         }
     }
 
+    /**
+     * Проверяет являются ли даты статуса активными на данный момент
+     * @return true
+     */
+    public function isActiveDate(): bool {
+        $data = $this->application->getData();
+        /** @var DateTime $dateStart */
+        $dateStart = $data['STAGE_DATE_START'] ?? null;
+        /** @var DateTime $dateStart */
+        $dateEnd = $data['STAGE_DATE_END'] ?? null;
+        if($data['STATUS_CODE'] == 'ATP_DEPARTMENTS') { //Исключение. Этой даты нет в списке этапов, поэтому пришлось сделать костыль. Нужно в следующем году согалсовать переделку с кадрами
+            $dateEnd->add('+3 days');
+        }
+        $now = new DateTime();
+
+        if ($dateStart === null || $dateEnd === null) {
+            return false;
+        }
+
+        return $dateStart <= $now && $now <= $dateEnd;
+    }
 }

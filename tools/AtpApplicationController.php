@@ -7,7 +7,7 @@ use aton\tools\Tables\AtpApplicationFilesTable;
 use aton\tools\Tables\AtpApplicationTable;
 use \aton\tools\Common\Form\AForm\AFormResult;
 use \aton\Main\Entity\ExpressionField;
-use CFile;
+use File;
 
 class AtpApplicationController
 {
@@ -133,7 +133,7 @@ class AtpApplicationController
                     if (stristr($fieldName, 'form_file_')) {
                         $answerId = str_replace('form_file_', '', $fieldName);
                         $arAnswerFile = AFormResult::GetFileByAnswerID($row['TEST_FILE_ID'], $answerId);
-                        $arFile = CFile::GetFileArray($arAnswerFile["USER_FILE_ID"]);
+                        $arFile = File::GetFileArray($arAnswerFile["USER_FILE_ID"]);
                         $fileExtension = pathinfo($arFile['FILE_NAME'], PATHINFO_EXTENSION);
                         $filename = str_replace(' ', '_', $row['NAME']) . '_' . str_replace(' ', '_', $row['APP_FILE_NAME'])
                             . ($key > 0 ? '_' . $key : '') . '.' . $fileExtension;

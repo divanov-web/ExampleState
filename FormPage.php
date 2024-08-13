@@ -107,7 +107,7 @@ class FormPage extends Controller
             ];
 
             if ($arData['BIRTHDAY'])
-                $data['BIRTHDAY'] = new BDateTime($arData['BIRTHDAY'], "d.m.Y");
+                $data['BIRTHDAY'] = new DateTime($arData['BIRTHDAY'], "d.m.Y");
 
 
             $application = new AtpApplication($data);

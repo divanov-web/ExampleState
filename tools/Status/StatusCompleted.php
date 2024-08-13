@@ -9,7 +9,7 @@ use \aton\tools\Atp\Button;
 
 class StatusCompleted extends AbstractStatus
 {
-    static public $statusCode = 'COMPLETED';
+    static public $statusCode = 'IT_COMPLETED';
     static public $eventCode = 'ITTP_INVITE_FINAL';
 
     public function getNextStatus(): ?AbstractStatus {

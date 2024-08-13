@@ -9,7 +9,7 @@ use \aton\tools\Atp\Button;
 
 class StatusInvited extends AbstractStatus
 {
-    static public $statusCode = 'INVITED';
+    static public $statusCode = 'IT_INVITED';
     static public $eventCode = 'ITTP_INVITE_VCV';
     static public $eventAfterRejectCode = 'ITTP_CANCEL_REJECT';
 
